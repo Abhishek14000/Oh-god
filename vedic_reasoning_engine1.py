@@ -299,7 +299,7 @@ def improved_shadbala(planet_data):
         if house in (1, 4, 7, 10):
             score += 20
             notes.append("kendra")
-        elif house in (1, 5, 9):
+        elif house in (5, 9):
             score += 15
             notes.append("trikona")
 
@@ -329,7 +329,7 @@ def saturn_transit_effect(planet_data):
     saturn_idx = _sign_index(saturn_sign)
 
     if moon_idx == -1 or saturn_idx == -1:
-        return "Transit data unavailable (unrecognised sign)."
+        return "Transit data unavailable (unrecognized sign)."
 
     # Difference in signs (forward count from Moon)
     diff = (saturn_idx - moon_idx) % 12 + 1  # 1-based house from Moon
