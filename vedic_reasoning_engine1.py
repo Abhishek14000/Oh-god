@@ -353,6 +353,47 @@ def saturn_transit_effect(planet_data):
 
 
 # -------------------------------
+# DOSHA DETECTION
+# -------------------------------
+def detect_doshas(planet_data):
+    output = "\n=== DOSHA ANALYSIS ===\n"
+
+    if planet_data.get("Mars", {}).get("house") in [1, 4, 7, 8, 12]:
+        output += "Manglik Dosha present.\n"
+
+    if (planet_data.get("Rahu", {}).get("house") == 1
+            and planet_data.get("Ketu", {}).get("house") == 7):
+        output += "Possible Kaal Sarp Dosha pattern.\n"
+
+    return output
+
+
+# -------------------------------
+# FINAL SYNTHESIS / PREDICTION
+# -------------------------------
+def generate_final_prediction(planet_data, dasha_list, transit_text):
+    output = "\n=== FINAL PREDICTION ===\n"
+
+    # Career logic based on Saturn placement
+    if "Saturn" in planet_data:
+        house = planet_data["Saturn"].get("house")
+        if house in [10, 11]:
+            output += "Strong career growth indicated through discipline and persistence.\n"
+        elif house in [6, 8, 12]:
+            output += "Career may face delays and obstacles, but long-term stability is possible.\n"
+
+    # Dasha influence
+    if len(dasha_list) > 0:
+        current = dasha_list[0].get("planet", "")
+        output += f"Current Mahadasha of {current} will strongly influence life direction.\n"
+
+    # Transit influence
+    output += transit_text + "\n"
+
+    return output
+
+
+# -------------------------------
 # FINAL REPORT
 # -------------------------------
 def generate_report():
@@ -403,6 +444,11 @@ def generate_report():
     insights = retrieve_insights(keywords)
     for i in insights:
         print("-", i[:300])
+
+    print(detect_doshas(planets))
+
+    final_pred = generate_final_prediction(planets, dasha, saturn_transit_effect(planets))
+    print(final_pred)
 
 
 # -------------------------------
