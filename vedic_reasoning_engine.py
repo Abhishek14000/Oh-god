@@ -374,31 +374,31 @@ def interpret_planet(planet, data, insights):
 
     interpretation = []
 
+    # Base classical statement
     base = (
-        f"{planet} in {sign} occupying the {_ordinal(house)} house "
-        f"under {nakshatra} nakshatra influences "
-        f"{_house_theme(house)}."
+        f"{planet} in {sign} occupying the {_ordinal(house)} house under {nakshatra} nakshatra "
+        f"influences {_house_theme(house)}."
     )
     interpretation.append(base)
 
-    # Combine strongest 2–3 sentences into a single flowing meaning
+    # Combine strongest insights into one refined meaning
     if len(sentences) >= 2:
         combined = " ".join(sentences[:2])
         interpretation.append(combined)
     elif sentences:
         interpretation.append(sentences[0])
 
-    # Add inferred classical tones for specific placements
-    if planet == "Mercury" and house == 3:
+    # Add inferred classical tone (NOT from chunks)
+    if planet == "Mercury":
         interpretation.append(
-            "This placement strengthens communication skills, though combustion or solar influence "
-            "may align thinking with authority rather than neutrality."
+            "Mercury governs intellect and speech; its placement here shapes reasoning ability "
+            "and communicative expression in alignment with the sign and house."
         )
 
-    if planet == "Saturn" and house == 12:
+    if planet == "Saturn":
         interpretation.append(
-            "Saturn here indicates karmic isolation, spiritual discipline, and potential foreign "
-            "residence or withdrawal from material pursuits."
+            "Saturn represents discipline, delay, and karmic responsibility; its placement "
+            "indicates areas of life requiring endurance and maturity."
         )
 
     return interpretation
