@@ -365,19 +365,43 @@ def synthesize_insight(insights):
 # ---------------- CONTEXTUAL SYNTHESIS ----------------
 
 def interpret_planet(planet, data, insights):
-    """Generate 3–5 refined classical interpretations for a planet."""
+    """Build a synthesized classical interpretation rather than stacking raw sentences."""
     sign = data["sign"]
     house = data["house"]
     nakshatra = data["nakshatra"]
 
-    preamble = (
-        f"{planet} situated in {sign}, occupying the {_ordinal(house)} bhava, "
-        f"under the asterism of {nakshatra}"
-    )
-
     sentences = synthesize_insight(insights)
-    interpretations = [preamble] + sentences[:4]
-    return interpretations
+
+    interpretation = []
+
+    base = (
+        f"{planet} in {sign} occupying the {_ordinal(house)} house "
+        f"under {nakshatra} nakshatra influences "
+        f"{_house_theme(house)}."
+    )
+    interpretation.append(base)
+
+    # Combine strongest 2–3 sentences into a single flowing meaning
+    if len(sentences) >= 2:
+        combined = " ".join(sentences[:2])
+        interpretation.append(combined)
+    elif sentences:
+        interpretation.append(sentences[0])
+
+    # Add inferred classical tones for specific placements
+    if planet == "Mercury" and house == 3:
+        interpretation.append(
+            "This placement strengthens communication skills, though combustion or solar influence "
+            "may align thinking with authority rather than neutrality."
+        )
+
+    if planet == "Saturn" and house == 12:
+        interpretation.append(
+            "Saturn here indicates karmic isolation, spiritual discipline, and potential foreign "
+            "residence or withdrawal from material pursuits."
+        )
+
+    return interpretation
 
 
 # ---------------- CROSS-PLANET ANALYSIS ----------------
