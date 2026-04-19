@@ -9,10 +9,174 @@ with open("kundali_rebuilt.json", "r", encoding="utf-8") as f:
 with open("all_books_chunks.json", "r", encoding="utf-8") as f:
     chunks = json.load(f)
 
+# ---------------- CONSTANTS ----------------
+
+MODERN_WORDS = {
+    "screen", "smartphone", "internet", "technology", "social media",
+    "burnout", "anxiety", "depression", "stress", "app", "digital",
+    "online", "website", "computer", "phone", "email", "therapy",
+    "mindfulness", "self-care", "productivity hack", "career advice",
+}
+
+ASTROLOGICAL_TERMS = {
+    "house", "sign", "nakshatra", "planet", "conjunction", "aspect",
+    "yoga", "rasi", "lagna", "ascendant", "lord", "bhava", "dasha",
+    "transit", "retrograde", "exalted", "debilitated", "combustion",
+    "trine", "kendra", "trikona", "dispositor", "vargottama",
+    "moolatrikona", "graha", "jyotish", "vedic", "aries", "taurus",
+    "gemini", "cancer", "leo", "virgo", "libra", "scorpio",
+    "sagittarius", "capricorn", "aquarius", "pisces",
+    "sun", "moon", "mercury", "venus", "mars", "jupiter",
+    "saturn", "rahu", "ketu",
+}
+
+HOUSE_THEMES = {
+    1: "self, body, and personality",
+    2: "wealth, speech, and family",
+    3: "courage, siblings, and communication",
+    4: "home, mother, and inner peace",
+    5: "intelligence, progeny, and past merit",
+    6: "enemies, disease, and service",
+    7: "partnership, spouse, and trade",
+    8: "longevity, transformation, and hidden matters",
+    9: "dharma, fortune, and the guru",
+    10: "karma, vocation, and public life",
+    11: "gains, aspirations, and elder siblings",
+    12: "liberation, foreign lands, and expenditure",
+}
+
+CONJUNCTION_EFFECTS = {
+    frozenset({"Sun", "Mercury"}): (
+        "Forms Budh Aditya Yoga — solar intelligence merged with eloquence grants "
+        "authority of speech and administrative acumen."
+    ),
+    frozenset({"Sun", "Moon"}): (
+        "Amavasya conjunction — the mind and soul share the same light; "
+        "introspection and intensity of purpose."
+    ),
+    frozenset({"Sun", "Mars"}): (
+        "Solar energy intensifies Martian drive — courageous and authoritative, "
+        "prone to rashness if unrestrained."
+    ),
+    frozenset({"Sun", "Venus"}): (
+        "Artistic sensibility meets solar authority — creative ambition; "
+        "Venus may be overpowered near the Sun."
+    ),
+    frozenset({"Sun", "Jupiter"}): (
+        "Guru and Sun together — wisdom enhanced by dignity; philosophical leadership."
+    ),
+    frozenset({"Sun", "Saturn"}): (
+        "Tension between the king and the servant — discipline through struggle; "
+        "notable karmic weight."
+    ),
+    frozenset({"Moon", "Mercury"}): (
+        "Emotional intelligence and analytic mind — strong memory and linguistic gifts."
+    ),
+    frozenset({"Moon", "Mars"}): (
+        "Emotional intensity and impulsive action — Chandra Mangala Yoga; "
+        "possible wealth through enterprise."
+    ),
+    frozenset({"Moon", "Jupiter"}): (
+        "Gaja Kesari potential — wisdom and popularity if in kendra; mental beneficence."
+    ),
+    frozenset({"Moon", "Venus"}): (
+        "Aesthetic sensitivity and emotional warmth — refined tastes, fond of pleasure."
+    ),
+    frozenset({"Moon", "Saturn"}): (
+        "Emotional contraction and discipline — Vish Yoga possible; patience born of suffering."
+    ),
+    frozenset({"Mars", "Mercury"}): (
+        "Sharp and combative intellect — technical skill; Mercury may lose calm judgment."
+    ),
+    frozenset({"Mars", "Jupiter"}): (
+        "Dharma and courage united — righteous action; Guru Mangala Yoga enhances ambition."
+    ),
+    frozenset({"Mars", "Venus"}): (
+        "Passion and artistry combined — strong desires; relationships may be intense."
+    ),
+    frozenset({"Mars", "Saturn"}): (
+        "Force and restraint in conflict — tremendous endurance; potential for disciplined enterprise."
+    ),
+    frozenset({"Jupiter", "Saturn"}): (
+        "The great teacher meets the great taskmaster — wisdom through hardship; "
+        "spiritual depth over time."
+    ),
+    frozenset({"Jupiter", "Venus"}): (
+        "Expansion of pleasure and wisdom — creative abundance; possible indulgence."
+    ),
+    frozenset({"Jupiter", "Mercury"}): (
+        "Philosophy and eloquence united — scholarly capacity, gift of teaching."
+    ),
+    frozenset({"Venus", "Saturn"}): (
+        "Artistic discipline — beauty through effort; longevity in relationships."
+    ),
+    frozenset({"Venus", "Mercury"}): (
+        "Refined communication and aesthetic sensibility — literary or artistic talent."
+    ),
+    frozenset({"Saturn", "Mercury"}): (
+        "Methodical and precise intellect — technical mastery; gravity and weight in speech."
+    ),
+}
+
 # ---------------- HELPERS ----------------
+
+def _ordinal(n):
+    suffixes = {1: "1st", 2: "2nd", 3: "3rd"}
+    return suffixes.get(n, f"{n}th")
+
+
+def _house_theme(house):
+    return HOUSE_THEMES.get(house, "this domain of life")
+
+
+def _is_classical_sentence(sentence):
+    """Return True if the sentence is astrologically meaningful and classical."""
+    words = sentence.split()
+    if len(words) < 6:
+        return False
+    sentence_lower = sentence.lower()
+    for modern in MODERN_WORDS:
+        if modern in sentence_lower:
+            return False
+    return any(term in sentence_lower for term in ASTROLOGICAL_TERMS)
+
+
+def _conjunction_interpretation(p1, p2):
+    key = frozenset({p1, p2})
+    return CONJUNCTION_EFFECTS.get(
+        key,
+        f"Combined influence of {p1} and {p2} — blended planetary natures "
+        f"shape the native's expression of both significations.",
+    )
+
+
+def _combustion_interpretation(planet, combustion_data):
+    diff = combustion_data["degree_diff"]
+    ctype = combustion_data["type"]
+    if planet == "Mercury":
+        if ctype == "budh_aditya":
+            return (
+                f"Mercury within {diff}° of the Sun forms Budh Aditya Yoga — "
+                f"solar radiance empowers Mercury's intelligence, granting sharp intellect, "
+                f"eloquence, and authority aligned with the Sun. Not purely detrimental — "
+                f"wisdom here is solar in quality."
+            )
+        return (
+            f"Mercury at {diff}° from the Sun — mild combustion reduces independent "
+            f"judgment; speech and reasoning become aligned with solar (ego/authority) "
+            f"themes rather than neutral analysis."
+        )
+    return (
+        f"{planet} is combust ({diff}° from the Sun) — planetary significations of "
+        f"{planet} are subsumed into solar themes; the native's expression of "
+        f"{planet.lower()}-related matters may be diminished or redirected through "
+        f"solar authority."
+    )
+
 
 def normalize(text):
     return text.lower()
+
 
 def score_chunk(chunk_text, planet, sign, house, nakshatra):
     text = normalize(chunk_text)
@@ -82,10 +246,12 @@ def detect_combustion(planets):
             diff = abs(data["degree"] - sun_deg)
 
             if planet == "Mercury" and diff < 14:
+                # Within 12°: Budh Aditya Yoga (solar intelligence, not purely negative)
+                ctype = "budh_aditya" if diff <= 12 else "mild combustion"
                 combustion.append({
                     "planet": planet,
                     "degree_diff": round(diff, 2),
-                    "type": "mild combustion" if diff > 6 else "strong combustion"
+                    "type": ctype
                 })
 
             elif diff < 10:
@@ -98,34 +264,14 @@ def detect_combustion(planets):
     return combustion
 
 
-# ---------------- COMBINED ANALYSIS ----------------
-
-def generate_combined_analysis(planets, conjunctions, combustion):
-    print("\n==============================")
-    print(" COMBINED ANALYSIS ")
-    print("==============================\n")
-
-    # Conjunction effects
-    for conj in conjunctions:
-        p1, p2 = conj["planets"]
-
-        if {"Sun", "Mercury"} == set([p1, p2]):
-            print("Budh Aditya Yoga detected: Intelligence + authority combination.\n")
-
-    # Combustion effects
-    for c in combustion:
-        if c["planet"] == "Mercury":
-            print(f"Mercury is {c['type']} (diff {c['degree_diff']}°): Communication and clarity affected.\n")
-
-    # Saturn special case
-    saturn = planets.get("Saturn")
-
-    if saturn:
-        if saturn["house"] == 12:
-            print("Saturn in 12th house: Indicates isolation, foreign connection, or spiritual growth.\n")
-
-
 # ---------------- YOGA DETECTION (FROM SHASTRA) ----------------
+
+INTERPRETIVE_WORDS = {
+    "combination", "when", "if", "gives", "results", "indicates",
+    "produces", "yoga", "conjunction", "together", "conjoined",
+    "aspected", "associated", "placed",
+}
+
 
 def detect_yogas_from_chunks(conjunctions):
     print("\n==============================")
@@ -134,30 +280,34 @@ def detect_yogas_from_chunks(conjunctions):
 
     for conj in conjunctions:
         p1, p2 = conj["planets"]
-        count = 0
+        matches = []
 
         for chunk in chunks:
             text = chunk.get("text", "").lower()
 
-            if (
-                p1.lower() in text and
-                p2.lower() in text and
-                "yoga" in text and
-                len(text) > 80 and
-                (
-                    "gives" in text or
-                    "results" in text or
-                    "indicates" in text or
-                    "produces" in text
-                )
-            ):
-                if count >= 3:
-                    break
+            if len(text) < 80:
+                continue
 
-                print(f"Possible yoga involving {p1} and {p2}:")
-                print(text[:200] + "...\n")
+            if p1.lower() not in text or p2.lower() not in text:
+                continue
 
-                count += 1
+            # Score by presence of interpretive / action language
+            score = sum(1 for word in INTERPRETIVE_WORDS if word in text)
+            if score >= 2:
+                matches.append((score, text))
+
+        # Rank by relevance before printing
+        matches.sort(reverse=True, key=lambda x: x[0])
+
+        count = 0
+        for score, text in matches:
+            if count >= 10:
+                break
+
+            print(f"Possible yoga involving {p1} and {p2}:")
+            print(text[:200] + "...\n")
+
+            count += 1
 
 
 # ---------------- RETRIEVAL ENGINE ----------------
@@ -198,7 +348,7 @@ def synthesize_insight(insights):
 
         for s in sentences:
             s = s.strip()
-            if len(s) > 40:
+            if _is_classical_sentence(s):
                 combined.append(s)
 
     # remove duplicates
@@ -207,52 +357,127 @@ def synthesize_insight(insights):
     return unique[:5]
 
 
+# ---------------- CONTEXTUAL SYNTHESIS ----------------
+
+def interpret_planet(planet, data, insights):
+    """Generate 3–5 refined classical interpretations for a planet."""
+    sign = data["sign"]
+    house = data["house"]
+    nakshatra = data["nakshatra"]
+
+    preamble = (
+        f"{planet} situated in {sign}, occupying the {_ordinal(house)} bhava, "
+        f"under the asterism of {nakshatra}"
+    )
+
+    sentences = synthesize_insight(insights)
+    interpretations = [preamble] + sentences[:4]
+    return interpretations
+
+
+# ---------------- CROSS-PLANET ANALYSIS ----------------
+
+def holistic_analysis(planets):
+    print("\n==============================")
+    print(" CROSS-PLANET ANALYSIS ")
+    print("==============================\n")
+
+    sign_groups = {}
+    house_groups = {}
+
+    for planet, data in planets.items():
+        sign_groups.setdefault(data["sign"], []).append(planet)
+        house_groups.setdefault(data["house"], []).append(planet)
+
+    # Stelliums: 3+ planets in the same sign
+    for sign, planet_list in sign_groups.items():
+        if len(planet_list) >= 3:
+            print(
+                f"Stellium in {sign}: {', '.join(planet_list)} — "
+                f"concentrated planetary energy intensifies the themes of this sign and its corresponding bhava."
+            )
+
+    # House clustering: 2+ planets in the same house
+    for house, planet_list in house_groups.items():
+        if len(planet_list) >= 2:
+            print(
+                f"House {house} clustering: {', '.join(planet_list)} — "
+                f"multiple grahas amplify {_house_theme(house)}."
+            )
+
+    # Notable cross-planet combinations
+    saturn = planets.get("Saturn")
+    jupiter = planets.get("Jupiter")
+
+    if saturn and jupiter and saturn["house"] == jupiter["house"]:
+        house = saturn["house"]
+        print(
+            f"\nSaturn + Jupiter conjunct in House {house}: "
+            f"Tension between expansion and restriction yields spiritual discipline; "
+            f"wisdom is earned through perseverance."
+        )
+
+    if saturn and saturn["house"] == 12:
+        print(
+            f"\nSaturn in the 12th house: Classical indicator of spiritual discipline, "
+            f"hidden strength, and eventual liberation (moksha). "
+            f"Foreign residence or institutionalized service is possible."
+        )
+
+    print()
+
+
 # ---------------- MAIN ENGINE ----------------
 
 def run_engine():
     planets = kundali["planets"]
 
-    print("\n==============================")
-    print(" PLANETARY INSIGHTS ")
-    print("==============================\n")
-
-    for planet, data in planets.items():
-        print(f"\n--- {planet} ({data['sign']} | House {data['house']}) ---")
-
-        insights = retrieve_insights(planet, data)
-
-        if not insights:
-            print("No strong matches found.\n")
-            continue
-
-        summary = synthesize_insight(insights)
-
-        for line in summary:
-            print(f"- {line}")
-
-        print("\n----------------------------------\n")
-
-
-    print("\n==============================")
-    print(" CONJUNCTIONS ")
-    print("==============================\n")
-
     conjunctions = detect_conjunctions(planets)
-
-    for conj in conjunctions:
-        print(conj)
-
-
-    print("\n==============================")
-    print(" COMBUSTION ")
-    print("==============================\n")
-
     combustion = detect_combustion(planets)
 
-    for c in combustion:
-        print(c)
+    # Build per-planet lookup maps
+    conjunction_map = {}
+    for conj in conjunctions:
+        p1, p2 = conj["planets"]
+        conjunction_map.setdefault(p1, []).append(conj)
+        conjunction_map.setdefault(p2, []).append(conj)
 
-    generate_combined_analysis(planets, conjunctions, combustion)
+    combustion_map = {c["planet"]: c for c in combustion}
+
+    # Per-planet structured output
+    for planet, data in planets.items():
+        print(f"\n{'=' * 30}")
+        print(f" PLANET: {planet.upper()}")
+        print(f"{'=' * 30}\n")
+
+        insights = retrieve_insights(planet, data)
+        interpretations = interpret_planet(planet, data, insights)
+
+        print("• Classical Interpretation:")
+        for line in interpretations:
+            print(f"  - {line}")
+
+        # Conjunction influence
+        planet_conjs = conjunction_map.get(planet, [])
+        if planet_conjs:
+            print("\n• Conjunction Influence:")
+            for conj in planet_conjs:
+                p1, p2 = conj["planets"]
+                other = p1 if p2 == planet else p2
+                interp = _conjunction_interpretation(planet, other)
+                print(
+                    f"  - {planet} conjoins {other} in {conj['sign']} "
+                    f"({conj['strength']}, {conj['degree_diff']}°): {interp}"
+                )
+
+        # Combustion effect
+        if planet in combustion_map:
+            print("\n• Combustion Effect:")
+            print(f"  - {_combustion_interpretation(planet, combustion_map[planet])}")
+
+        print()
+
+    holistic_analysis(planets)
 
     detect_yogas_from_chunks(conjunctions)
 
