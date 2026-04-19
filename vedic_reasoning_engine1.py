@@ -47,6 +47,30 @@ def retrieve_insights(keywords, chunk_list=None):
 
 
 # -------------------------------
+# INTERPRETATION LAYER
+# -------------------------------
+def interpret_text(raw_text):
+    text = raw_text.strip()
+
+    # Remove noisy OCR patterns
+    if any(x in text.lower() for x in [
+        "page", "chapter", "pdf", "copyright",
+        "vedic remedies in astrology", "brihat parasara"
+    ]):
+        return None
+
+    # Clean formatting
+    text = text.replace("\n", " ").strip()
+
+    # Skip too short or broken text
+    if len(text) < 40:
+        return None
+
+    # Convert into Jyotish-style interpretation
+    return f"This indicates that {text.lower().capitalize()}."
+
+
+# -------------------------------
 # PLANET ANALYSIS
 # -------------------------------
 def analyze_planets():
@@ -66,7 +90,9 @@ def analyze_planets():
         section += f"{planet} in {data.get('sign', 'N/A')} (House {data.get('house', 'N/A')}, {data.get('nakshatra', 'N/A')})\n"
 
         for insight in insights:
-            section += f"- {insight}\n"
+            interpreted = interpret_text(insight)
+            if interpreted:
+                section += f"- {interpreted}\n"
 
         output.append(section)
 
@@ -94,7 +120,9 @@ def analyze_dasha():
         output += f"\n{planet} Mahadasha ({period.get('start', '?')} - {period.get('end', '?')}):\n"
 
         for insight in insights:
-            output += f"- {insight}\n"
+            interpreted = interpret_text(insight)
+            if interpreted:
+                output += f"- {interpreted}\n"
 
     return output
 
@@ -118,7 +146,9 @@ def analyze_sadesati():
             output += f"\n{period.get('phase', '?')} Phase ({period.get('start', '?')} - {period.get('end', '?')}):\n"
 
             for insight in insights:
-                output += f"- {insight}\n"
+                interpreted = interpret_text(insight)
+                if interpreted:
+                    output += f"- {interpreted}\n"
 
     return output
 
@@ -140,7 +170,9 @@ def detect_yogas():
     insights = retrieve_insights(keywords)
 
     for insight in insights:
-        output += f"- {insight}\n"
+        interpreted = interpret_text(insight)
+        if interpreted:
+            output += f"- {interpreted}\n"
 
     return output
 
@@ -701,7 +733,9 @@ def generate_report():
 
     insights = retrieve_insights(keywords)
     for i in insights:
-        print("-", i[:300])
+        interpreted = interpret_text(i[:300])
+        if interpreted:
+            print("-", interpreted)
 
     print(detect_doshas(planets))
 
