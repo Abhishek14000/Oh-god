@@ -6,7 +6,8 @@ Extract structured kundali data from AstroSage PDF and generate a clean JSON.
 import json
 import os
 import re
-from pdfminer.high_level import extract_text
+from pdfminer.high_level import extract_text, extract_pages
+from pdfminer.layout import LTTextBox, LTTextLine
 
 PDF_FILE = "VedicReport10-12-20253-36-34AM (1) (1) (1) (1)_removed (1).pdf"
 SMALL_PDF_FILE = "VedicReport10-12-20253-36-34AM (1) (1) (1) (1)_removed (1)_removed.pdf"
@@ -532,85 +533,188 @@ def _date_tuple(date_str):
 
 
 def parse_sade_sati_from_small_pdf():
-    """
-    Extract Sade Sati / Small Panoti rows from the condensed AstroSage PDF.
+    raw = extract_text("VedicReport10-12-20253-36-34AM (1) (1) (1) (1)_removed (1)_removed.pdf")
 
-    Steps:
-      1. Load text from SMALL_PDF_FILE, normalize spaces, split into lines.
-      2. Keep only lines containing 'Panoti' or 'Sade Sati'; skip headers/URLs.
-      3. Rejoin broken date lines (e.g. 'January 09,\\n2003' → 'January 09, 2003').
-      4. Extract each row via a single-line regex (type, rashi, start, end, phase).
-      5. Normalize dates to DD/MM/YYYY.
-      6. Validate start < end; discard invalid rows.
-      7. Build result dicts.
-      8. Sort by start date.
-      9. Return the full list (~44 rows expected).
-    """
-    # STEP 1 — load & normalize
-    raw = extract_text(SMALL_PDF_FILE)
-    all_lines = [re.sub(r"[ \t]+", " ", ln).strip() for ln in raw.splitlines()]
+    # normalize spacing
+    text = re.sub(r"[ \t]+", " ", raw)
 
-    # STEP 2 — filter relevant lines (keep Panoti / Sade Sati; drop headers, ads, URLs)
-    filtered = []
-    for line in all_lines:
-        if not line:
-            continue
-        if re.search(r"https?://|AstroSage|Get free|Printing Date|Page No", line, re.IGNORECASE):
-            continue
-        if "Panoti" in line or "Sade Sati" in line:
-            filtered.append(line)
-
-    # STEP 3 — rejoin broken date lines
-    joined = "\n".join(filtered)
-    joined = re.sub(
-        r"((?:" + _MONTHS + r")\s+\d{1,2},)\s*\n\s*(\d{4})",
-        r"\1 \2", joined,
+    # fix broken dates (multi-line issues)
+    text = re.sub(
+        r"((January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},)\s*\n\s*(\d{4})",
+        r"\1 \3", text
     )
-    joined = re.sub(
-        r"((?:" + _MONTHS + r"))\s*\n\s*(\d{1,2},\s*\d{4})",
-        r"\1 \2", joined,
+    text = re.sub(
+        r"((January|February|March|April|May|June|July|August|September|October|November|December))\s*\n\s*(\d{1,2},\s*\d{4})",
+        r"\1 \3", text
     )
 
-    # STEP 4 — extract rows with the prescribed regex
-    row_pat = re.compile(
-        r"(Small Panoti|Sade Sati)\s+(\w+)\s+"
+    # extract full rows correctly
+    pattern = re.compile(
+        r"(Small Panoti|Sade Sati)\s+"
+        r"(Aries|Taurus|Gemini|Cancer|Leo|Virgo|Libra|Scorpio|Sagittarius|Capricorn|Aquarius|Pisces)\s+"
         r"([A-Za-z]+\s+\d{1,2},\s*\d{4})\s+"
         r"([A-Za-z]+\s+\d{1,2},\s*\d{4})"
-        r"(?:\s+(Rising|Peak|Setting))?",
+        r"(?:\s+(Rising|Peak|Setting))?"
     )
 
+    rows = _extract_sade_sati_by_position()
+
+    rows.sort(key=lambda x: _date_tuple(x["start"]))
+
+    return rows
+
+
+def _extract_sade_sati_by_position():
+    """
+    Parse the Sade Sati table by grouping pdfminer text elements
+    using their x,y coordinates to reconstruct each table row.
+
+    Column layout (approximate x positions):
+      x≈ 92  – S.N.
+      x≈164  – Type (e.g. "Sade Sati", "Small Panoti Taurus")
+      x≈236  – Rashi (only present for "Sade Sati" rows)
+      x≈308  – Start Date
+      x≈380  – End Date
+      x≈452  – Phase
+    """
+    # Collect all text elements with (page, y, x, text)
+    elements = []
+    for page_num, page_layout in enumerate(
+        extract_pages(
+            "VedicReport10-12-20253-36-34AM (1) (1) (1) (1)_removed (1)_removed.pdf"
+        )
+    ):
+        for elem in page_layout:
+            if isinstance(elem, LTTextBox):
+                for line in elem:
+                    if isinstance(line, LTTextLine):
+                        txt = line.get_text().strip()
+                        if txt:
+                            elements.append(
+                                (page_num, round(line.y0, 1), round(line.x0, 1), txt)
+                            )
+
+    # Identify S.N. anchors: integer text at x≈92
+    sn_anchors = []
+    for pg, y, x, txt in elements:
+        if 80 <= x <= 155 and re.fullmatch(r"\d{1,2}", txt):
+            sn_anchors.append((int(txt), pg, y))
+    sn_anchors.sort(key=lambda a: a[0])
+
+    if not sn_anchors:
+        return []
+
+    MARGIN = 3
     rows = []
-    for m in row_pat.finditer(joined):
-        stype   = m.group(1)
-        rashi   = normalize_sign(m.group(2))
-        start_s = m.group(3).strip()
-        end_s   = m.group(4).strip()
-        phase   = m.group(5)
+    for i, (sn, pg, y_anchor) in enumerate(sn_anchors):
+        y_top = y_anchor + MARGIN
 
-        # STEP 5 — normalize dates
-        start_fmt = _parse_long_date(start_s)
-        end_fmt   = _parse_long_date(end_s)
+        # Bottom boundary: use the next anchor ON THE SAME PAGE; otherwise page bottom
+        y_bot = -9999
+        for j in range(i + 1, len(sn_anchors)):
+            next_sn, next_pg, next_y = sn_anchors[j]
+            if next_pg == pg:
+                y_bot = next_y      # strict lower bound (y > y_bot)
+                break
 
-        # STEP 6 — validate: start must precede end, both must parse correctly
+        # Collect all elements on this page within this row's y range
+        # Use strict lower bound to avoid including elements that belong to the next row
+        row_elems = [
+            (y, x, txt)
+            for p, y, x, txt in elements
+            if p == pg and y_bot < y <= y_top
+        ]
+        row_elems.sort(key=lambda e: (-e[0], e[1]))
+
+        # Separate into columns by x threshold
+        type_parts, rashi_parts, start_parts, end_parts, phase_parts = [], [], [], [], []
+        for y, x, txt in row_elems:
+            if x < 80:
+                pass  # outside table (e.g. page footer at x≈10) — skip
+            elif x <= 155:
+                pass  # S.N. — skip
+            elif x <= 220:
+                # Type column – skip non-table noise such as URL footer lines
+                if re.search(r"https?://|AstroSage|Printing Date", txt):
+                    continue
+                type_parts.append(txt)
+            elif x <= 295:
+                rashi_parts.append(txt)
+            elif x <= 370:
+                start_parts.append(txt)
+            elif x <= 445:
+                # End date column – may contain an embedded phase (e.g. "June 22, 2044 Setting")
+                phase_match = re.search(r"(Rising|Peak|Setting)", txt)
+                if phase_match:
+                    phase_parts.append(phase_match.group(1))
+                end_parts.append(txt)
+            else:
+                # Phase column – sometimes end date fragment bleeds here
+                # e.g. "June 22, 2044 Setting" or "May 02, 2098 Rising"
+                m = re.search(
+                    r"([A-Za-z]+\s+\d{1,2},\s*\d{4})\s+(Rising|Peak|Setting)", txt
+                )
+                if m:
+                    end_parts.append(m.group(1))
+                    phase_parts.append(m.group(2))
+                elif re.search(r"Rising|Peak|Setting", txt):
+                    phase_parts.append(txt.strip())
+                else:
+                    end_parts.append(txt)
+
+        # Reconstruct full type string
+        type_str = " ".join(type_parts).strip()
+
+        m_type = re.match(r"(Small Panoti|Sade Sati)\s*(.*)", type_str)
+        if not m_type:
+            continue
+        base_type = m_type.group(1)
+        inline_rashi = m_type.group(2).strip()
+
+        if inline_rashi:
+            rashi = normalize_sign(inline_rashi)
+        elif rashi_parts:
+            rashi = normalize_sign(" ".join(rashi_parts).strip())
+        else:
+            continue
+
+        if rashi not in ZODIAC_ORDER:
+            continue
+
+        _DATE_PAT = (
+            r"(January|February|March|April|May|June|July|August|"
+            r"September|October|November|December)\s+\d{1,2},\s*\d{4}"
+        )
+
+        # Combine start and end columns so partial dates split across columns are joined
+        combined = re.sub(r"\s+", " ", " ".join(start_parts + end_parts)).strip()
+        date_matches = list(re.finditer(_DATE_PAT, combined))
+
+        start_str = date_matches[0].group(0) if len(date_matches) >= 1 else None
+        end_str = date_matches[1].group(0) if len(date_matches) >= 2 else None
+
+        if not start_str or not end_str:
+            continue
+
+        start_fmt = _parse_long_date(start_str)
+        end_fmt = _parse_long_date(end_str)
+
         try:
             if _date_tuple(start_fmt) >= _date_tuple(end_fmt):
                 continue
-        except (IndexError, ValueError):
+        except Exception:
             continue
 
-        # STEP 7 — store
+        phase = " ".join(phase_parts).strip() or None
+
         rows.append({
-            "type":  stype,
+            "type":  base_type,
             "rashi": rashi,
             "start": start_fmt,
             "end":   end_fmt,
             "phase": phase,
         })
 
-    # STEP 8 — sort by start date
-    rows.sort(key=lambda r: _date_tuple(r["start"]))
-
-    # STEP 9 — return
     return rows
 
 
