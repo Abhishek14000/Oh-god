@@ -132,6 +132,7 @@ def analyze_dasha():
 # -------------------------------
 def analyze_sadesati():
     output = "\n=== SADE SATI ANALYSIS ===\n"
+    output += "Sade Sati is a transit-based influence and should be interpreted along with Dasha and Yogas.\n\n"
 
     for period in sadesati:
         if period.get("type") == "Sade Sati":
@@ -482,19 +483,27 @@ def detect_real_yogas(planet_data):
     output = "\n=== CLASSICAL YOGA ANALYSIS ===\n"
     output += "This section identifies important yogas formed in your chart.\n\n"
 
+    yoga_found = False
+
     # Raj Yoga: Kendra + Trikona lord interaction (simplified)
     if (planet_data.get("Jupiter", {}).get("house") in [1, 5, 9]
             and planet_data.get("Saturn", {}).get("house") in [1, 4, 7, 10]):
-        output += "Raj Yoga present — strong potential for success, authority, and recognition.\n"
+        output += "⚡ Raj Yoga indicates potential rise in status, authority, and recognition.\n"
+        yoga_found = True
 
     # Dhan Yoga
     if (planet_data.get("Venus", {}).get("house") in [2, 11]
             or planet_data.get("Jupiter", {}).get("house") in [2, 11]):
-        output += "Dhan Yoga present — potential for wealth accumulation and financial growth.\n"
+        output += "💰 Dhan Yoga indicates financial growth and wealth accumulation potential.\n"
+        yoga_found = True
 
     # Vipreet Raj Yoga
     if planet_data.get("Saturn", {}).get("house") in [6, 8, 12]:
-        output += "Vipreet Raj Yoga — success through adversity and unexpected rise after struggle.\n"
+        output += "🔥 Vipreet Raj Yoga indicates success through adversity and unexpected rise.\n"
+        yoga_found = True
+
+    if not yoga_found:
+        output += "No major classical yogas detected, but planetary combinations still influence destiny.\n"
 
     return output
 
@@ -685,7 +694,14 @@ def analyze_7th_lord(planet_data, kundali_data):
 def generate_report():
     print("\n🔱 VEDIC ASTROLOGY REPORT 🔱\n")
 
-    # Basic kundali summary
+    # --- Task 5: Report Navigation ---
+    print("\n=== REPORT STRUCTURE ===")
+    print("1. Yogas → Core destiny")
+    print("2. Dasha → Timing")
+    print("3. Planets → Base structure")
+    print("4. Transit → Temporary influence\n")
+
+    # 1. Kundali Summary
     print("=== KUNDALI SUMMARY ===")
     for key in ("name", "date_of_birth", "time_of_birth", "place_of_birth", "ascendant"):
         if key in kundali:
@@ -698,31 +714,59 @@ def generate_report():
         print(f"  {planet:10s} | Sign: {data.get('sign', 'N/A'):15s} | House: {data.get('house', 'N/A'):2} | Nakshatra: {data.get('nakshatra', 'N/A')}")
     print()
 
+    # 2. Classical Yogas
+    print("\n🔥 CORE DESTINY FACTORS (YOGAS) 🔥\n")
+    print(detect_real_yogas(planets))
+
+    # 3. Lagna Lord Analysis
+    print(analyze_lagna_lord(kundali, planets))
+
+    # 4. 10th Lord (Career Core)
+    print(analyze_10th_lord(planets, kundali))
+
+    # 5. 7th Lord (Marriage Core)
+    print(analyze_7th_lord(planets, kundali))
+
+    # 6. Planetary Analysis
     print(analyze_planets())
+
+    # 7. Mahadasha Analysis
+    print("\n⏳ TIMING ANALYSIS (DASHA SYSTEM) ⏳\n")
     print(analyze_dasha())
-    print(analyze_sadesati())
-    print(detect_yogas())
 
-    print("\n=== ASPECTS (DRISHTI) ===")
-    for a in calculate_aspects(planets):
-        print(" ", a)
+    # 8. Antardasha Analysis
+    print(analyze_antardasha(dasha))
 
-    print("\n=== NAVAMSA (D9) ===")
-    for p, d in planets.items():
-        nav = calculate_navamsa(d.get("degree", 0), d.get("sign", ""))
-        print(f"  {p:10s} → Navamsa sign: {nav}")
+    # 9. Antardasha Timeline
+    print(antardasha_timeline(dasha))
 
+    # 10. Combined Analysis
+    print(combined_analysis(planets))
+
+    # 11. Career Section
+    print(analyze_career(planets))
+
+    # 12. Marriage Section
+    print(analyze_marriage(planets))
+
+    # 13. Shadbala
     print("\n=== SHADBALA (PLANETARY STRENGTH) ===")
     print("This section evaluates the strength of planets in your chart and their ability to deliver results.\n")
     for s in improved_shadbala(planets):
         print(" ", s)
 
-    print("\n=== TRANSIT ANALYSIS ===")
-    print("This section examines how current planetary transits are interacting with your natal chart and what shifts they may bring.\n")
-    transit_text = saturn_transit_effect(planets)
-    print(" ", transit_text)
+    # 14. Navamsa
+    print("\n=== NAVAMSA (D9) ===")
+    for p, d in planets.items():
+        nav = calculate_navamsa(d.get("degree", 0), d.get("sign", ""))
+        print(f"  {p:10s} → Navamsa sign: {nav}")
 
-    # Shastra insights from filtered chunks
+    # 15. Aspects (Drishti)
+    print("\n=== ASPECTS (DRISHTI) ===")
+    for a in calculate_aspects(planets):
+        print(" ", a)
+
+    # 16. Shastra Insights (full)
     print("\n=== SHASTRA INSIGHTS ===")
     print("The following insights are drawn from classical Vedic texts and are relevant to the planetary placements in your chart.\n")
     keywords = []
@@ -737,31 +781,27 @@ def generate_report():
         if interpreted:
             print("-", interpreted)
 
+    # 17. Doshas
     print(detect_doshas(planets))
 
-    print(combined_analysis(planets))
+    # 18. Transit Analysis
+    print("\n=== TRANSIT ANALYSIS ===")
+    print("This section examines how current planetary transits are interacting with your natal chart and what shifts they may bring.\n")
+    transit_text = saturn_transit_effect(planets)
+    print(" ", transit_text)
 
-    print(analyze_antardasha(dasha))
+    # 19. Sade Sati Analysis (FULL, no limit)
+    print("\n🪐 TRANSIT ANALYSIS (INCLUDING SADE SATI) 🪐\n")
+    print(analyze_sadesati())
 
-    print(detect_real_yogas(planets))
-
-    print(analyze_career(planets))
-
-    print(analyze_marriage(planets))
-
+    # 20. Remedies
     print(suggest_remedies(planets))
 
-    print(antardasha_timeline(dasha))
-
-    print(analyze_lagna_lord(kundali, planets))
-
-    print(analyze_10th_lord(planets, kundali))
-
-    print(analyze_7th_lord(planets, kundali))
-
+    # 21. Final Prediction
     final_pred = generate_final_prediction(planets, dasha, transit_text)
     print(final_pred)
 
+    # 22. Overall Summary
     print("\n=== OVERALL SUMMARY ===")
     print("Your chart shows a blend of karmic challenges and growth opportunities. With the right effort and awareness, strong progress is indicated in key areas of life.")
 
