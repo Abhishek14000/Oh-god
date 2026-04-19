@@ -431,7 +431,8 @@ def generate_report():
         print(" ", s)
 
     print("\n=== TRANSIT ANALYSIS ===")
-    print(" ", saturn_transit_effect(planets))
+    transit_text = saturn_transit_effect(planets)
+    print(" ", transit_text)
 
     # Shastra insights from filtered chunks
     print("\n=== SHASTRA INSIGHTS ===")
@@ -447,7 +448,7 @@ def generate_report():
 
     print(detect_doshas(planets))
 
-    final_pred = generate_final_prediction(planets, dasha, saturn_transit_effect(planets))
+    final_pred = generate_final_prediction(planets, dasha, transit_text)
     print(final_pred)
 
 
