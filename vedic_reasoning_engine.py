@@ -45,6 +45,10 @@ HOUSE_THEMES = {
     12: "liberation, foreign lands, and expenditure",
 }
 
+MIN_CHUNK_LENGTH = 50          # minimum characters for a chunk to be scored
+MIN_YOGA_CHUNK_LENGTH = 80     # minimum characters for yoga pattern matching
+YOGA_TEXT_PREVIEW_LENGTH = 200  # characters to preview per yoga match
+
 CONJUNCTION_EFFECTS = {
     frozenset({"Sun", "Mercury"}): (
         "Forms Budh Aditya Yoga — solar intelligence merged with eloquence grants "
@@ -285,7 +289,7 @@ def detect_yogas_from_chunks(conjunctions):
         for chunk in chunks:
             text = chunk.get("text", "").lower()
 
-            if len(text) < 80:
+            if len(text) < MIN_YOGA_CHUNK_LENGTH:
                 continue
 
             if p1.lower() not in text or p2.lower() not in text:
@@ -305,7 +309,7 @@ def detect_yogas_from_chunks(conjunctions):
                 break
 
             print(f"Possible yoga involving {p1} and {p2}:")
-            print(text[:200] + "...\n")
+            print(text[:YOGA_TEXT_PREVIEW_LENGTH] + "...\n")
 
             count += 1
 
@@ -319,7 +323,7 @@ def retrieve_insights(planet, data):
         text = chunk.get("text", "")
 
         # filter garbage / short text
-        if len(text) < 50:
+        if len(text) < MIN_CHUNK_LENGTH:
             continue
 
         score = score_chunk(
@@ -351,7 +355,8 @@ def synthesize_insight(insights):
             if _is_classical_sentence(s):
                 combined.append(s)
 
-    # remove duplicates
+    # dict.fromkeys preserves insertion order while removing duplicates,
+    # keeping the highest-scoring sentences first
     unique = list(dict.fromkeys(combined))
 
     return unique[:5]
