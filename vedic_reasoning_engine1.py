@@ -357,15 +357,16 @@ def saturn_transit_effect(planet_data):
 # -------------------------------
 def detect_doshas(planet_data):
     output = "\n=== DOSHA ANALYSIS ===\n"
+    output += "This section identifies key karmic patterns in your chart that may influence important life areas.\n\n"
 
     mars_house = planet_data.get("Mars", {}).get("house")
     if mars_house in [1, 4, 7, 8, 12]:
-        output += "Manglik Dosha present — may affect marriage dynamics.\n"
+        output += "Your chart carries Manglik Dosha — this placement of Mars may influence your marriage dynamics and should be considered when making partnership decisions.\n"
 
     rahu_house = planet_data.get("Rahu", {}).get("house")
     ketu_house = planet_data.get("Ketu", {}).get("house")
     if rahu_house == 1 and ketu_house == 7:
-        output += "Kaal Sarp pattern detected — life may show extreme highs/lows.\n"
+        output += "A Kaal Sarp pattern is detected in your chart — your life journey may feature dramatic highs and lows, but these experiences ultimately shape profound inner growth.\n"
 
     return output
 
@@ -375,24 +376,25 @@ def detect_doshas(planet_data):
 # -------------------------------
 def generate_final_prediction(planet_data, dasha_list, transit_text):
     output = "\n=== FINAL PREDICTION ===\n"
+    output += "Based on the full analysis of your chart, here is a synthesised view of what lies ahead.\n\n"
 
     # Career logic based on Saturn placement
     if "Saturn" in planet_data:
         house = planet_data["Saturn"].get("house")
         if house in [10, 11]:
-            output += "Career will grow steadily with discipline and persistence.\n"
+            output += "Your chart indicates that your career is likely to grow steadily over time, especially through discipline and persistence.\n"
         elif house in [6, 8, 12]:
-            output += "Career delays and struggles possible, but long-term stability exists.\n"
+            output += "Your chart suggests possible career delays and struggles, but long-term stability is very much attainable with patience and consistent effort.\n"
 
     # Moon sign emotional nature
     moon_sign = planet_data.get("Moon", {}).get("sign")
     if moon_sign:
-        output += f"Emotional nature influenced by {moon_sign}, impacting decision making.\n"
+        output += f"Your emotional tendencies are influenced by {moon_sign}, shaping the way you process and make important decisions in life.\n"
 
     # Dasha influence
     if len(dasha_list) > 0:
         current = dasha_list[0].get("planet", "")
-        output += f"Current Mahadasha of {current} will dominate life events.\n"
+        output += f"The current Mahadasha of {current} is set to dominate key life events and themes during this period.\n"
 
     # Transit influence
     output += transit_text + "\n"
@@ -405,13 +407,14 @@ def generate_final_prediction(planet_data, dasha_list, transit_text):
 # -------------------------------
 def combined_analysis(planet_data):
     output = "\n=== COMBINED ANALYSIS ===\n"
+    output += "This section looks at planetary combinations in your chart that produce distinctive life themes and outcomes.\n\n"
 
     if (planet_data.get("Saturn", {}).get("house") == 12
             and planet_data.get("Jupiter", {}).get("house") == 12):
-        output += "Saturn + Jupiter in 12th indicates strong spiritual potential and foreign connections.\n"
+        output += "With both Saturn and Jupiter placed in the 12th house, your chart carries strong spiritual potential along with meaningful connections to foreign lands or institutions.\n"
 
     if planet_data.get("Sun", {}).get("house") == 3:
-        output += "Sun in 3rd gives courage, leadership in communication and self-effort.\n"
+        output += "Your Sun in the 3rd house bestows courage and a natural ability to lead through communication, writing, and self-driven effort.\n"
 
     return output
 
@@ -450,15 +453,18 @@ def generate_report():
         print(f"  {p:10s} → Navamsa sign: {nav}")
 
     print("\n=== SHADBALA (PLANETARY STRENGTH) ===")
+    print("This section evaluates the strength of planets in your chart and their ability to deliver results.\n")
     for s in improved_shadbala(planets):
         print(" ", s)
 
     print("\n=== TRANSIT ANALYSIS ===")
+    print("This section examines how current planetary transits are interacting with your natal chart and what shifts they may bring.\n")
     transit_text = saturn_transit_effect(planets)
     print(" ", transit_text)
 
     # Shastra insights from filtered chunks
     print("\n=== SHASTRA INSIGHTS ===")
+    print("The following insights are drawn from classical Vedic texts and are relevant to the planetary placements in your chart.\n")
     keywords = []
     for p, d in planets.items():
         keywords.append(p.lower())
@@ -475,6 +481,9 @@ def generate_report():
 
     final_pred = generate_final_prediction(planets, dasha, transit_text)
     print(final_pred)
+
+    print("\n=== OVERALL SUMMARY ===")
+    print("Your chart shows a blend of karmic challenges and growth opportunities. With the right effort and awareness, strong progress is indicated in key areas of life.")
 
 
 # -------------------------------
