@@ -8,6 +8,7 @@ import re
 from pdfminer.high_level import extract_text
 
 PDF_FILE = "VedicReport10-12-20253-36-34AM (1) (1) (1) (1)_removed (1).pdf"
+SMALL_PDF_FILE = "VedicReport10-12-20253-36-34AM (1) (1) (1) (1)_removed (1)_removed.pdf"
 OUTPUT_FILE = "kundali_rebuilt.json"
 
 # ─────────────────────────────────────────────
@@ -523,6 +524,95 @@ def extract_sade_sati(text):
     return rows
 
 
+def _date_tuple(date_str):
+    """Convert 'DD/MM/YYYY' to (YYYY, MM, DD) tuple for comparison/sorting."""
+    parts = date_str.split("/")
+    return (int(parts[2]), int(parts[1]), int(parts[0]))
+
+
+def parse_sade_sati_from_small_pdf():
+    """
+    Extract Sade Sati / Small Panoti rows from the condensed AstroSage PDF.
+
+    Steps:
+      1. Load text from SMALL_PDF_FILE, normalize spaces, split into lines.
+      2. Keep only lines containing 'Panoti' or 'Sade Sati'; skip headers/URLs.
+      3. Rejoin broken date lines (e.g. 'January 09,\\n2003' → 'January 09, 2003').
+      4. Extract each row via a single-line regex (type, rashi, start, end, phase).
+      5. Normalize dates to DD/MM/YYYY.
+      6. Validate start < end; discard invalid rows.
+      7. Build result dicts.
+      8. Sort by start date.
+      9. Return the full list (~44 rows expected).
+    """
+    # STEP 1 — load & normalize
+    raw = extract_text(SMALL_PDF_FILE)
+    all_lines = [re.sub(r"[ \t]+", " ", ln).strip() for ln in raw.splitlines()]
+
+    # STEP 2 — filter relevant lines (keep Panoti / Sade Sati; drop headers, ads, URLs)
+    filtered = []
+    for line in all_lines:
+        if not line:
+            continue
+        if re.search(r"https?://|AstroSage|Get free|Printing Date|Page No", line, re.IGNORECASE):
+            continue
+        if "Panoti" in line or "Sade Sati" in line:
+            filtered.append(line)
+
+    # STEP 3 — rejoin broken date lines
+    joined = "\n".join(filtered)
+    joined = re.sub(
+        r"((?:" + _MONTHS + r")\s+\d{1,2},)\s*\n\s*(\d{4})",
+        r"\1 \2", joined,
+    )
+    joined = re.sub(
+        r"((?:" + _MONTHS + r"))\s*\n\s*(\d{1,2},\s*\d{4})",
+        r"\1 \2", joined,
+    )
+
+    # STEP 4 — extract rows with the prescribed regex
+    row_pat = re.compile(
+        r"(Small Panoti|Sade Sati)\s+(\w+)\s+"
+        r"([A-Za-z]+\s+\d{1,2},\s*\d{4})\s+"
+        r"([A-Za-z]+\s+\d{1,2},\s*\d{4})"
+        r"(?:\s+(Rising|Peak|Setting))?",
+    )
+
+    rows = []
+    for m in row_pat.finditer(joined):
+        stype   = m.group(1)
+        rashi   = normalize_sign(m.group(2))
+        start_s = m.group(3).strip()
+        end_s   = m.group(4).strip()
+        phase   = m.group(5)
+
+        # STEP 5 — normalize dates
+        start_fmt = _parse_long_date(start_s)
+        end_fmt   = _parse_long_date(end_s)
+
+        # STEP 6 — validate: start must precede end, both must parse correctly
+        try:
+            if _date_tuple(start_fmt) >= _date_tuple(end_fmt):
+                continue
+        except (IndexError, ValueError):
+            continue
+
+        # STEP 7 — store
+        rows.append({
+            "type":  stype,
+            "rashi": rashi,
+            "start": start_fmt,
+            "end":   end_fmt,
+            "phase": phase,
+        })
+
+    # STEP 8 — sort by start date
+    rows.sort(key=lambda r: _date_tuple(r["start"]))
+
+    # STEP 9 — return
+    return rows
+
+
 # ─────────────────────────────────────────────
 # STEP 12 – KALSARPA
 # ─────────────────────────────────────────────
@@ -546,7 +636,7 @@ def main():
     ashtakavarga = extract_ashtakavarga(text)          # STEP 8
     vimshottari  = extract_vimshottari(text)           # STEP 9
     yogini       = extract_yogini(text)                # STEP 10
-    sade_sati    = extract_sade_sati(text)             # STEP 11
+    sade_sati    = parse_sade_sati_from_small_pdf()    # STEP 11 (new)
     kalsarpa     = extract_kalsarpa(text)              # STEP 12
 
     output = {                                         # STEP 14
