@@ -358,12 +358,14 @@ def saturn_transit_effect(planet_data):
 def detect_doshas(planet_data):
     output = "\n=== DOSHA ANALYSIS ===\n"
 
-    if planet_data.get("Mars", {}).get("house") in [1, 4, 7, 8, 12]:
-        output += "Manglik Dosha present.\n"
+    mars_house = planet_data.get("Mars", {}).get("house")
+    if mars_house in [1, 4, 7, 8, 12]:
+        output += "Manglik Dosha present — may affect marriage dynamics.\n"
 
-    if (planet_data.get("Rahu", {}).get("house") == 1
-            and planet_data.get("Ketu", {}).get("house") == 7):
-        output += "Possible Kaal Sarp Dosha pattern.\n"
+    rahu_house = planet_data.get("Rahu", {}).get("house")
+    ketu_house = planet_data.get("Ketu", {}).get("house")
+    if rahu_house == 1 and ketu_house == 7:
+        output += "Kaal Sarp pattern detected — life may show extreme highs/lows.\n"
 
     return output
 
@@ -378,17 +380,38 @@ def generate_final_prediction(planet_data, dasha_list, transit_text):
     if "Saturn" in planet_data:
         house = planet_data["Saturn"].get("house")
         if house in [10, 11]:
-            output += "Strong career growth indicated through discipline and persistence.\n"
+            output += "Career will grow steadily with discipline and persistence.\n"
         elif house in [6, 8, 12]:
-            output += "Career may face delays and obstacles, but long-term stability is possible.\n"
+            output += "Career delays and struggles possible, but long-term stability exists.\n"
+
+    # Moon sign emotional nature
+    moon_sign = planet_data.get("Moon", {}).get("sign")
+    if moon_sign:
+        output += f"Emotional nature influenced by {moon_sign}, impacting decision making.\n"
 
     # Dasha influence
     if len(dasha_list) > 0:
         current = dasha_list[0].get("planet", "")
-        output += f"Current Mahadasha of {current} will strongly influence life direction.\n"
+        output += f"Current Mahadasha of {current} will dominate life events.\n"
 
     # Transit influence
     output += transit_text + "\n"
+
+    return output
+
+
+# -------------------------------
+# COMBINED SYNTHESIS ANALYSIS
+# -------------------------------
+def combined_analysis(planet_data):
+    output = "\n=== COMBINED ANALYSIS ===\n"
+
+    if (planet_data.get("Saturn", {}).get("house") == 12
+            and planet_data.get("Jupiter", {}).get("house") == 12):
+        output += "Saturn + Jupiter in 12th indicates strong spiritual potential and foreign connections.\n"
+
+    if planet_data.get("Sun", {}).get("house") == 3:
+        output += "Sun in 3rd gives courage, leadership in communication and self-effort.\n"
 
     return output
 
@@ -447,6 +470,8 @@ def generate_report():
         print("-", i[:300])
 
     print(detect_doshas(planets))
+
+    print(combined_analysis(planets))
 
     final_pred = generate_final_prediction(planets, dasha, transit_text)
     print(final_pred)
