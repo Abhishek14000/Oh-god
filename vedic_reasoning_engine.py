@@ -98,6 +98,33 @@ def detect_combustion(planets):
     return combustion
 
 
+# ---------------- COMBINED ANALYSIS ----------------
+
+def generate_combined_analysis(planets, conjunctions, combustion):
+    print("\n==============================")
+    print(" COMBINED ANALYSIS ")
+    print("==============================\n")
+
+    # Conjunction effects
+    for conj in conjunctions:
+        p1, p2 = conj["planets"]
+
+        if {"Sun", "Mercury"} == set([p1, p2]):
+            print("Budh Aditya Yoga detected: Intelligence + authority combination.\n")
+
+    # Combustion effects
+    for c in combustion:
+        if c["planet"] == "Mercury":
+            print(f"Mercury is {c['type']} (diff {c['degree_diff']}°): Communication and clarity affected.\n")
+
+    # Saturn special case
+    saturn = planets.get("Saturn")
+
+    if saturn:
+        if saturn["house"] == 12:
+            print("Saturn in 12th house: Indicates isolation, foreign connection, or spiritual growth.\n")
+
+
 # ---------------- RETRIEVAL ENGINE ----------------
 
 def retrieve_insights(planet, data):
@@ -187,6 +214,8 @@ def run_engine():
 
     for c in combustion:
         print(c)
+
+    generate_combined_analysis(planets, conjunctions, combustion)
 
 
 if __name__ == "__main__":
