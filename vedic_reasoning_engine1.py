@@ -536,6 +536,118 @@ def suggest_remedies(planet_data):
 
 
 # -------------------------------
+# SIGN CONSTANTS (shared by lord analysis functions)
+# -------------------------------
+SIGN_ORDER = [
+    "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo",
+    "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"
+]
+
+SIGN_LORDS = {
+    "Aries": "Mars", "Taurus": "Venus", "Gemini": "Mercury", "Cancer": "Moon",
+    "Leo": "Sun", "Virgo": "Mercury", "Libra": "Venus", "Scorpio": "Mars",
+    "Sagittarius": "Jupiter", "Capricorn": "Saturn", "Aquarius": "Saturn",
+    "Pisces": "Jupiter"
+}
+
+
+# -------------------------------
+# ANTARDASHA TIMELINE
+# -------------------------------
+def antardasha_timeline(dasha_list):
+    output = "\n=== ANTARDASHA TIMELINE ===\n"
+    output += "Detailed breakdown of sub-periods within the current Mahadasha.\n\n"
+
+    for d in dasha_list[:5]:
+        planet = d.get("planet", "")
+        start = d.get("start", "?")
+        end = d.get("end", "?")
+
+        output += f"{planet} Antardasha: {start} → {end}\n"
+
+    return output
+
+
+# -------------------------------
+# LAGNA LORD ANALYSIS
+# -------------------------------
+def analyze_lagna_lord(kundali_data, planet_data):
+    output = "\n=== LAGNA LORD ANALYSIS ===\n\n"
+
+    lagna = kundali_data.get("ascendant", "")
+    lord = SIGN_LORDS.get(lagna)
+
+    if not lord:
+        return output + "Lagna lord not found.\n"
+
+    data = planet_data.get(lord, {})
+
+    output += f"Your ascendant is {lagna}, ruled by {lord}.\n"
+    output += f"{lord} is placed in {data.get('sign')} (House {data.get('house')}).\n"
+
+    if data.get("house") in [1, 5, 9]:
+        output += "This strengthens personality, confidence, and life direction.\n"
+    elif data.get("house") in [6, 8, 12]:
+        output += "This indicates challenges and karmic lessons shaping your life path.\n"
+
+    return output
+
+
+# -------------------------------
+# 10TH LORD (CAREER DEEP ANALYSIS)
+# -------------------------------
+def analyze_10th_lord(planet_data, kundali_data):
+    output = "\n=== 10TH LORD (CAREER DEEP ANALYSIS) ===\n\n"
+
+    lagna = kundali_data.get("ascendant", "")
+    if lagna not in SIGN_ORDER:
+        return output + "Ascendant not found for 10th lord analysis.\n"
+
+    lagna_index = SIGN_ORDER.index(lagna)
+    tenth_sign = SIGN_ORDER[(lagna_index + 9) % 12]
+    lord = SIGN_LORDS.get(tenth_sign)
+
+    data = planet_data.get(lord, {})
+
+    output += f"Your 10th house falls in {tenth_sign}, ruled by {lord}.\n"
+    output += f"{lord} is placed in {data.get('sign')} (House {data.get('house')}).\n"
+
+    if data.get("house") in [10, 11]:
+        output += "Indicates strong professional success and recognition.\n"
+    elif data.get("house") in [6, 8, 12]:
+        output += "Career path may involve obstacles, transformation, or unconventional routes.\n"
+
+    return output
+
+
+# -------------------------------
+# 7TH LORD (MARRIAGE DEEP ANALYSIS)
+# -------------------------------
+def analyze_7th_lord(planet_data, kundali_data):
+    output = "\n=== 7TH LORD (MARRIAGE DEEP ANALYSIS) ===\n\n"
+
+    lagna = kundali_data.get("ascendant", "")
+    if lagna not in SIGN_ORDER:
+        return output + "Ascendant not found for 7th lord analysis.\n"
+
+    lagna_index = SIGN_ORDER.index(lagna)
+    seventh_sign = SIGN_ORDER[(lagna_index + 6) % 12]
+    lord = SIGN_LORDS.get(seventh_sign)
+
+    data = planet_data.get(lord, {})
+
+    output += f"Your 7th house falls in {seventh_sign}, ruled by {lord}.\n"
+    output += f"{lord} is placed in {data.get('sign')} (House {data.get('house')}).\n"
+
+    if data.get("house") in [1, 5, 7]:
+        output += "Favorable for relationships and partnership harmony.\n"
+    elif data.get("house") in [6, 8, 12]:
+        output += "May indicate delays, challenges, or karmic patterns in relationships.\n"
+
+    return output
+
+
+# -------------------------------
 # FINAL REPORT
 # -------------------------------
 def generate_report():
@@ -604,6 +716,14 @@ def generate_report():
     print(analyze_marriage(planets))
 
     print(suggest_remedies(planets))
+
+    print(antardasha_timeline(dasha))
+
+    print(analyze_lagna_lord(kundali, planets))
+
+    print(analyze_10th_lord(planets, kundali))
+
+    print(analyze_7th_lord(planets, kundali))
 
     final_pred = generate_final_prediction(planets, dasha, transit_text)
     print(final_pred)
