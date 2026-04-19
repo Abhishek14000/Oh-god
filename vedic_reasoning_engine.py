@@ -134,13 +134,30 @@ def detect_yogas_from_chunks(conjunctions):
 
     for conj in conjunctions:
         p1, p2 = conj["planets"]
+        count = 0
 
         for chunk in chunks:
             text = chunk.get("text", "").lower()
 
-            if p1.lower() in text and p2.lower() in text and "yoga" in text:
+            if (
+                p1.lower() in text and
+                p2.lower() in text and
+                "yoga" in text and
+                len(text) > 80 and
+                (
+                    "gives" in text or
+                    "results" in text or
+                    "indicates" in text or
+                    "produces" in text
+                )
+            ):
+                if count >= 3:
+                    break
+
                 print(f"Possible yoga involving {p1} and {p2}:")
                 print(text[:200] + "...\n")
+
+                count += 1
 
 
 # ---------------- RETRIEVAL ENGINE ----------------
@@ -212,6 +229,8 @@ def run_engine():
 
         for line in summary:
             print(f"- {line}")
+
+        print("\n----------------------------------\n")
 
 
     print("\n==============================")
