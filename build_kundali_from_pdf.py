@@ -4,6 +4,7 @@ Extract structured kundali data from AstroSage PDF and generate a clean JSON.
 """
 
 import json
+import os
 import re
 from pdfminer.high_level import extract_text
 
@@ -628,15 +629,28 @@ def extract_kalsarpa(text):
 # MAIN
 # ─────────────────────────────────────────────
 def main():
+    print("Starting kundali extraction...")
+
+    if not os.path.exists(PDF_FILE):
+        raise FileNotFoundError(f"{PDF_FILE} not found")
+    if not os.path.exists(SMALL_PDF_FILE):
+        raise FileNotFoundError(f"{SMALL_PDF_FILE} not found")
+
     text = read_pdf(PDF_FILE)                          # STEP 1
     basic        = extract_basic_details(text)         # STEP 2
+    print("Basic details extracted")
     planet_list  = extract_planetary_positions(text)   # STEP 3 & 4
     asc_sign     = basic.get("lagna", "Gemini")        # STEP 7
     planets      = build_planets(planet_list, asc_sign)# STEP 13
+    print("Planets extracted")
     ashtakavarga = extract_ashtakavarga(text)          # STEP 8
+    print("Ashtakavarga extracted")
     vimshottari  = extract_vimshottari(text)           # STEP 9
+    print("Vimshottari extracted")
     yogini       = extract_yogini(text)                # STEP 10
+    print("Yogini extracted")
     sade_sati    = parse_sade_sati_from_small_pdf()    # STEP 11 (new)
+    print("Sade Sati extracted")
     kalsarpa     = extract_kalsarpa(text)              # STEP 12
 
     output = {                                         # STEP 14
@@ -652,7 +666,7 @@ def main():
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:   # STEP 15
         json.dump(output, f, indent=2, ensure_ascii=False)
 
-    print(f"Saved {OUTPUT_FILE}")
+    print("kundali_rebuilt.json successfully created")
 
 
 if __name__ == "__main__":
