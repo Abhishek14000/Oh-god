@@ -126,6 +126,25 @@ def retrieve_insights(planet, data):
     return results[:5]
 
 
+# ---------------- SYNTHESIS ----------------
+
+def synthesize_insight(insights):
+    combined = []
+
+    for score, text in insights:
+        sentences = re.split(r'[.?!]', text)
+
+        for s in sentences:
+            s = s.strip()
+            if len(s) > 40:
+                combined.append(s)
+
+    # remove duplicates
+    unique = list(dict.fromkeys(combined))
+
+    return unique[:5]
+
+
 # ---------------- MAIN ENGINE ----------------
 
 def run_engine():
@@ -144,8 +163,10 @@ def run_engine():
             print("No strong matches found.\n")
             continue
 
-        for score, text in insights:
-            print(f"[Score: {score}] {text[:200]}...\n")
+        summary = synthesize_insight(insights)
+
+        for line in summary:
+            print(f"- {line}")
 
 
     print("\n==============================")
