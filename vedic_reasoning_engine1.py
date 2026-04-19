@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 
 # -------------------------------
 # LOAD FILES
@@ -225,6 +226,117 @@ def detect_basic_yogas(planets):
 
 
 # -------------------------------
+# ENHANCED CONJUNCTION STRENGTH
+# -------------------------------
+def enhanced_conjunctions(planets):
+    results = []
+    planet_list = list(planets.items())
+
+    for i in range(len(planet_list)):
+        for j in range(i + 1, len(planet_list)):
+            p1, d1 = planet_list[i]
+            p2, d2 = planet_list[j]
+
+            if d1["house"] == d2["house"]:
+                diff = abs(d1["degree"] - d2["degree"])
+
+                if diff <= 5:
+                    strength = "Strong conjunction"
+                elif diff <= 10:
+                    strength = "Moderate conjunction"
+                else:
+                    strength = "Weak conjunction"
+
+                results.append(f"{p1} + {p2} in house {d1['house']} ({strength}, {diff:.2f}°)")
+
+    return results
+
+
+# -------------------------------
+# ADVANCED COMBUSTION INTERPRETATION
+# -------------------------------
+def advanced_combustion(planets):
+    results = []
+    sun_deg = planets["Sun"]["degree"]
+
+    for p, d in planets.items():
+        if p == "Sun":
+            continue
+
+        diff = abs(sun_deg - d["degree"])
+
+        if p == "Mercury":
+            if diff < 3:
+                results.append("Mercury cazimi: extremely sharp intellect")
+            elif diff < 6:
+                results.append("Budh-Aditya Yoga: intelligence enhanced despite combustion")
+            elif diff < 14:
+                results.append("Mercury combust: intellect affected but not destroyed")
+
+        if p == "Venus" and diff < 10:
+            results.append("Venus combust: relationship and comfort affected")
+
+    return results
+
+
+# -------------------------------
+# CURRENT MAHADASHA DETECTION (REAL)
+# -------------------------------
+def get_current_dasha(dasha):
+    today = datetime.now()
+
+    for period in dasha:
+        start = datetime.strptime(period["start"], "%d/%m/%Y")
+        end = datetime.strptime(period["end"], "%d/%m/%Y")
+
+        if start <= today <= end:
+            return f"Current Mahadasha: {period['planet']} ({period['start']} - {period['end']})"
+
+    return "No current Mahadasha found"
+
+
+# -------------------------------
+# ACTIVE SADE SATI PHASE
+# -------------------------------
+def active_sade_sati(sadesati):
+    today = datetime.now()
+
+    for period in sadesati:
+        if period["type"] == "Sade Sati":
+            start = datetime.strptime(period["start"], "%d/%m/%Y")
+            end = datetime.strptime(period["end"], "%d/%m/%Y")
+
+            if start <= today <= end:
+                return f"Currently in {period['phase']} phase of Sade Sati ({period['rashi']})"
+
+    return "No active Sade Sati currently"
+
+
+# -------------------------------
+# PLANET STRENGTH RANKING
+# -------------------------------
+def planet_strength(planets):
+    scores = {}
+
+    for p, d in planets.items():
+        score = 0
+
+        if d["house"] in [1, 5, 9, 10]:
+            score += 3
+
+        if d["sign"] in ["Leo", "Aries", "Sagittarius"]:
+            score += 2
+
+        score += 1
+
+        scores[p] = score
+
+    sorted_planets = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+
+    return sorted_planets
+
+
+# -------------------------------
 # FINAL REPORT
 # -------------------------------
 def generate_report():
@@ -254,6 +366,24 @@ def generate_report():
     print("\nYoga Logic:")
     for y in detect_basic_yogas(planets):
         print(y)
+
+    print("\nEnhanced Conjunctions:")
+    for c in enhanced_conjunctions(planets):
+        print(c)
+
+    print("\nAdvanced Combustion:")
+    for c in advanced_combustion(planets):
+        print(c)
+
+    print("\nCurrent Mahadasha:")
+    print(get_current_dasha(dasha))
+
+    print("\nActive Sade Sati:")
+    print(active_sade_sati(sadesati))
+
+    print("\nPlanet Strength Ranking:")
+    for p in planet_strength(planets):
+        print(p)
 
 
 # -------------------------------
