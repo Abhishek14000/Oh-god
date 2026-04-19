@@ -125,6 +125,24 @@ def generate_combined_analysis(planets, conjunctions, combustion):
             print("Saturn in 12th house: Indicates isolation, foreign connection, or spiritual growth.\n")
 
 
+# ---------------- YOGA DETECTION (FROM SHASTRA) ----------------
+
+def detect_yogas_from_chunks(conjunctions):
+    print("\n==============================")
+    print(" YOGA DETECTION (FROM SHASTRA) ")
+    print("==============================\n")
+
+    for conj in conjunctions:
+        p1, p2 = conj["planets"]
+
+        for chunk in chunks:
+            text = chunk.get("text", "").lower()
+
+            if p1.lower() in text and p2.lower() in text and "yoga" in text:
+                print(f"Possible yoga involving {p1} and {p2}:")
+                print(text[:200] + "...\n")
+
+
 # ---------------- RETRIEVAL ENGINE ----------------
 
 def retrieve_insights(planet, data):
@@ -216,6 +234,8 @@ def run_engine():
         print(c)
 
     generate_combined_analysis(planets, conjunctions, combustion)
+
+    detect_yogas_from_chunks(conjunctions)
 
 
 if __name__ == "__main__":
