@@ -178,13 +178,16 @@ _NAKSHATRA_NAMES = (
 )
 
 
+_PLANETARY_SECTION_MAX_CHARS = 2000  # generous upper bound for one planet-table block
+
+
 def extract_planetary_positions(text):
     sec_m = re.search(r"Planetary Positions\s*\nPlanets\s*\n", text)
     if not sec_m:
         return []
     sec_start = sec_m.start()
     sec_end_m = re.search(r"Ashtakvarga Table", text[sec_start:])
-    sec = text[sec_start: sec_start + sec_end_m.start()] if sec_end_m else text[sec_start: sec_start + 2000]
+    sec = text[sec_start: sec_start + sec_end_m.start()] if sec_end_m else text[sec_start: sec_start + _PLANETARY_SECTION_MAX_CHARS]
 
     # --- planet names (each on its own line) ---
     raw_names = re.findall(
@@ -346,13 +349,13 @@ def extract_vimshottari(text):
     for d in ordered:
         sy, ey = d["sy"], d["ey"]
         # Push start forward if it precedes previous dasha end
-        while sy < prev_end - 1:
-            sy += 100
+        if sy < prev_end - 1:
+            sy += ((prev_end - 1 - sy + 99) // 100) * 100
         d["sy"] = sy
         d["start"] = _set_year(d["start"], sy)
         # Push end forward until it exceeds start
-        while ey <= sy:
-            ey += 100
+        if ey <= sy:
+            ey += ((sy - ey + 100) // 100) * 100
         d["ey"] = ey
         d["end"] = _set_year(d["end"], ey)
         prev_end = ey
@@ -372,7 +375,9 @@ YOGINI_MAP = {
 
 
 def _parse_yogini_date_raw(raw):
-    """Returns (day, mon, yr_2digit, yr_base) using 1900+yr if yr>=50, else 2000+yr."""
+    """Parse Yogini date string 'D/ M/YY'. Returns (day, mon, yr, yr_base) where
+    yr_base uses 1900+yr for yr>=50, else 2000+yr (century is later corrected
+    by the chronological walk in extract_yogini)."""
     m = re.match(r"\s*(\d+)/\s*(\d+)/(\d+)\s*", raw)
     if not m:
         return None, None, None, None
@@ -416,8 +421,8 @@ def extract_yogini(text):
         if day is None:
             parsed_starts.append(from_date.strip())
             continue
-        while yr_base < prev_year:
-            yr_base += 100
+        if yr_base < prev_year:
+            yr_base += ((prev_year - yr_base + 99) // 100) * 100
         prev_year = yr_base
         parsed_starts.append(f"{day:02d}/{mon:02d}/{yr_base}")
 
