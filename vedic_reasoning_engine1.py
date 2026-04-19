@@ -420,6 +420,122 @@ def combined_analysis(planet_data):
 
 
 # -------------------------------
+# ANTARDASHA ANALYSIS
+# -------------------------------
+def analyze_antardasha(dasha_list):
+    output = "\n=== ANTARDASHA ANALYSIS ===\n"
+    output += "This section analyzes sub-period influences within the current Mahadasha.\n\n"
+
+    if len(dasha_list) < 2:
+        return output + "Insufficient data for Antardasha analysis.\n"
+
+    main = dasha_list[0].get("planet", "")
+    sub = dasha_list[1].get("planet", "")
+
+    output += f"You are currently running {main}-{sub} period.\n"
+
+    if main == "Saturn":
+        output += "This period emphasizes discipline, responsibility, and karmic lessons.\n"
+
+    if sub == "Mercury":
+        output += "Sub-period of Mercury brings focus on communication, learning, and analytical thinking.\n"
+
+    return output
+
+
+# -------------------------------
+# CLASSICAL YOGA DETECTION
+# -------------------------------
+def detect_real_yogas(planet_data):
+    output = "\n=== CLASSICAL YOGA ANALYSIS ===\n"
+    output += "This section identifies important yogas formed in your chart.\n\n"
+
+    # Raj Yoga: Kendra + Trikona lord interaction (simplified)
+    if (planet_data.get("Jupiter", {}).get("house") in [1, 5, 9]
+            and planet_data.get("Saturn", {}).get("house") in [1, 4, 7, 10]):
+        output += "Raj Yoga present — strong potential for success, authority, and recognition.\n"
+
+    # Dhan Yoga
+    if (planet_data.get("Venus", {}).get("house") in [2, 11]
+            or planet_data.get("Jupiter", {}).get("house") in [2, 11]):
+        output += "Dhan Yoga present — potential for wealth accumulation and financial growth.\n"
+
+    # Vipreet Raj Yoga
+    if planet_data.get("Saturn", {}).get("house") in [6, 8, 12]:
+        output += "Vipreet Raj Yoga — success through adversity and unexpected rise after struggle.\n"
+
+    return output
+
+
+# -------------------------------
+# CAREER ANALYSIS
+# -------------------------------
+def analyze_career(planet_data):
+    output = "\n=== CAREER ANALYSIS ===\n"
+    output += "This section evaluates professional direction, growth, and challenges.\n\n"
+
+    saturn_house = planet_data.get("Saturn", {}).get("house")
+    sun_house = planet_data.get("Sun", {}).get("house")
+
+    if saturn_house in [10, 11]:
+        output += "Strong long-term career growth with discipline and persistence.\n"
+
+    if saturn_house in [6, 8, 12]:
+        output += "Career may involve delays, struggles, or unconventional paths.\n"
+
+    if sun_house == 10:
+        output += "Sun in 10th gives leadership ability and authority in career.\n"
+
+    return output
+
+
+# -------------------------------
+# MARRIAGE & RELATIONSHIP ANALYSIS
+# -------------------------------
+def analyze_marriage(planet_data):
+    output = "\n=== MARRIAGE & RELATIONSHIP ANALYSIS ===\n"
+    output += "This section evaluates partnership dynamics and marital prospects.\n\n"
+
+    venus_house = planet_data.get("Venus", {}).get("house")
+    mars_house = planet_data.get("Mars", {}).get("house")
+
+    if venus_house in [7, 1]:
+        output += "Strong indications for attraction, romance, and meaningful partnerships.\n"
+
+    if mars_house in [7, 8]:
+        output += "Mars influence suggests intensity in relationships — careful handling of conflicts is advised.\n"
+
+    if planet_data.get("Saturn", {}).get("house") == 7:
+        output += "Saturn in 7th may delay marriage but ensures stability and maturity.\n"
+
+    return output
+
+
+# -------------------------------
+# CLASSICAL REMEDIES
+# -------------------------------
+def suggest_remedies(planet_data):
+    output = "\n=== CLASSICAL REMEDIES ===\n"
+    output += "These remedies are based on traditional Vedic practices.\n\n"
+
+    if planet_data.get("Saturn"):
+        output += "- Chant 'Om Sham Shanicharaya Namah' on Saturdays.\n"
+        output += "- Donate black sesame seeds or mustard oil.\n"
+
+    if planet_data.get("Mars"):
+        output += "- Chant 'Om Angarakaya Namah'.\n"
+        output += "- Visit Hanuman temple on Tuesdays.\n"
+
+    if planet_data.get("Rahu"):
+        output += "- Chant 'Om Rahave Namah'.\n"
+
+    if planet_data.get("Ketu"):
+        output += "- Chant 'Om Ketave Namah'.\n"
+
+    return output
+
+
+# -------------------------------
 # FINAL REPORT
 # -------------------------------
 def generate_report():
@@ -478,6 +594,16 @@ def generate_report():
     print(detect_doshas(planets))
 
     print(combined_analysis(planets))
+
+    print(analyze_antardasha(dasha))
+
+    print(detect_real_yogas(planets))
+
+    print(analyze_career(planets))
+
+    print(analyze_marriage(planets))
+
+    print(suggest_remedies(planets))
 
     final_pred = generate_final_prediction(planets, dasha, transit_text)
     print(final_pred)
