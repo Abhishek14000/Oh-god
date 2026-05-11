@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
   <title>Birthday Card Demo</title>
   <style>
     :root {
@@ -288,12 +291,14 @@
       for (let i = 0; i < count; i++) {
         const angle = Math.random() * Math.PI * 2;
         const speed = 2 + Math.random() * 6;
+        const life = 50 + Math.random() * 40;
         particles.push({
           x: burstX, y: burstY,
           vx: Math.cos(angle) * speed,
           vy: Math.sin(angle) * speed - 2,
           g: 0.09 + Math.random() * 0.06,
-          life: 50 + Math.random() * 40,
+          life,
+          maxLife: life,
           size: 2 + Math.random() * 4,
           color: colors[Math.floor(Math.random() * colors.length)]
         });
@@ -308,7 +313,7 @@
         p.x += p.vx;
         p.y += p.vy;
         p.life--;
-        ctx.globalAlpha = Math.max(p.life / 90, 0);
+        ctx.globalAlpha = Math.max(p.life / p.maxLife, 0);
         ctx.fillStyle = p.color;
         ctx.fillRect(p.x, p.y, p.size, p.size * 1.8);
       }
@@ -334,11 +339,6 @@
     scene.addEventListener("click", (e) => confettiBurst(e.clientX, e.clientY, 70));
     blastBtn.addEventListener("click", () => confettiBurst(w / 2, h * 0.45, 180));
     wishBtn.addEventListener("click", () => {
-      if (wishes.length === 0) {
-        wishBox.textContent = "Wishing you a beautiful birthday! ✨";
-        confettiBurst(w / 2, h * 0.35, 120);
-        return;
-      }
       let index = Math.floor(Math.random() * wishes.length);
       if (wishes.length > 1) {
         while (index === lastWishIndex) {
