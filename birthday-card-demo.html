@@ -265,7 +265,7 @@
       w = canvas.width = innerWidth;
       h = canvas.height = innerHeight;
     }
-    addEventListener("resize", resize);
+    window.addEventListener("resize", resize);
 
     function spawnBalloons() {
       const colors = ["#ff4d8d", "#ffd166", "#77f5ff", "#9f7bff", "#ff7b54"];
@@ -275,7 +275,7 @@
         b.style.left = `${Math.random() * 100}%`;
         b.style.animationDuration = `${8 + Math.random() * 8}s`;
         b.style.animationDelay = `${-Math.random() * 12}s`;
-        b.style.background = colors[i % colors.length];
+        b.style.background = colors[Math.floor(Math.random() * colors.length)];
         balloons.appendChild(b);
       }
     }
@@ -331,7 +331,7 @@
     scene.addEventListener("click", (e) => confettiBurst(e.clientX, e.clientY, 70));
     blastBtn.addEventListener("click", () => confettiBurst(w / 2, h * 0.45, 180));
     wishBtn.addEventListener("click", () => {
-      wishBox.textContent = wishes[(Math.random() * wishes.length) | 0];
+      wishBox.textContent = wishes[Math.floor(Math.random() * wishes.length)];
       confettiBurst(w / 2, h * 0.35, 120);
     });
 
