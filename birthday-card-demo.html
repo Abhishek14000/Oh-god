@@ -256,6 +256,7 @@
       "May this year be your boldest and happiest chapter yet 🚀",
       "Hope your dreams level up in every direction 🌌"
     ];
+    let lastWishIndex = -1;
 
     let w = canvas.width = window.innerWidth;
     let h = canvas.height = window.innerHeight;
@@ -280,13 +281,15 @@
       }
     }
 
-    function confettiBurst(x = w / 2, y = h / 2, count = 120) {
+    function confettiBurst(x, y, count = 120) {
+      const burstX = x ?? w / 2;
+      const burstY = y ?? h / 2;
       const colors = ["#ffd166", "#ff4d8d", "#77f5ff", "#ffffff", "#9f7bff"];
       for (let i = 0; i < count; i++) {
         const angle = Math.random() * Math.PI * 2;
         const speed = 2 + Math.random() * 6;
         particles.push({
-          x, y,
+          x: burstX, y: burstY,
           vx: Math.cos(angle) * speed,
           vy: Math.sin(angle) * speed - 2,
           g: 0.09 + Math.random() * 0.06,
@@ -331,7 +334,19 @@
     scene.addEventListener("click", (e) => confettiBurst(e.clientX, e.clientY, 70));
     blastBtn.addEventListener("click", () => confettiBurst(w / 2, h * 0.45, 180));
     wishBtn.addEventListener("click", () => {
-      wishBox.textContent = wishes[Math.floor(Math.random() * wishes.length)];
+      if (wishes.length === 0) {
+        wishBox.textContent = "Wishing you a beautiful birthday! ✨";
+        confettiBurst(w / 2, h * 0.35, 120);
+        return;
+      }
+      let index = Math.floor(Math.random() * wishes.length);
+      if (wishes.length > 1) {
+        while (index === lastWishIndex) {
+          index = Math.floor(Math.random() * wishes.length);
+        }
+      }
+      lastWishIndex = index;
+      wishBox.textContent = wishes[index];
       confettiBurst(w / 2, h * 0.35, 120);
     });
 
