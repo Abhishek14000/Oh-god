@@ -292,7 +292,7 @@
           g: 0.09 + Math.random() * 0.06,
           life: 50 + Math.random() * 40,
           size: 2 + Math.random() * 4,
-          color: colors[(Math.random() * colors.length) | 0]
+          color: colors[Math.floor(Math.random() * colors.length)]
         });
       }
     }
