@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Birthday Card Demo</title>
+  <style>
+    :root {
+      --bg1: #0f0b2e;
+      --bg2: #1c0f53;
+      --bg3: #3a1f8f;
+      --gold: #ffd166;
+      --pink: #ff4d8d;
+      --cyan: #77f5ff;
+      --white: #f7f8ff;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: "Poppins", "Segoe UI", sans-serif;
+      color: var(--white);
+      background: radial-gradient(circle at 20% 20%, #3f2b96 0%, #1b1445 35%, #0a0720 100%);
+      perspective: 1000px;
+    }
+
+    .scene {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      cursor: crosshair;
+    }
+
+    .layer {
+      position: absolute;
+      inset: -10%;
+      transition: transform 0.15s linear;
+      will-change: transform;
+    }
+
+    .stars::before,
+    .stars::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        radial-gradient(circle, rgba(255,255,255,.85) 1px, transparent 1px),
+        radial-gradient(circle, rgba(255,255,255,.65) 1px, transparent 1px);
+      background-size: 4px 4px, 6px 6px;
+      background-position: 0 0, 30px 40px;
+      opacity: .55;
+      animation: twinkle 5s infinite alternate;
+    }
+    .stars::after { animation-duration: 8s; opacity: .35; filter: blur(0.5px); }
+    @keyframes twinkle { from { opacity: .25; } to { opacity: .7; } }
+
+    .aurora {
+      background:
+        radial-gradient(ellipse at 30% 20%, rgba(116, 240, 255, .28) 0%, transparent 55%),
+        radial-gradient(ellipse at 70% 40%, rgba(255, 74, 166, .24) 0%, transparent 58%),
+        radial-gradient(ellipse at 50% 80%, rgba(255, 209, 102, .2) 0%, transparent 62%);
+      filter: blur(30px);
+      animation: pulse 8s infinite ease-in-out;
+    }
+    @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+
+    .card-wrap {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      z-index: 20;
+      pointer-events: none;
+    }
+    .card {
+      width: min(90vw, 780px);
+      min-height: min(80vh, 500px);
+      border-radius: 28px;
+      padding: 2rem;
+      position: relative;
+      pointer-events: auto;
+      transform-style: preserve-3d;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.12), rgba(255,255,255,.04)),
+        radial-gradient(circle at top right, rgba(255, 77, 141, .25), transparent 40%),
+        radial-gradient(circle at bottom left, rgba(119, 245, 255, .25), transparent 45%),
+        rgba(10, 8, 32, .55);
+      border: 1px solid rgba(255,255,255,.22);
+      box-shadow: 0 22px 50px rgba(0,0,0,.45), 0 0 45px rgba(119,245,255,.2);
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+      animation: float 4.2s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .glow-ring {
+      position: absolute;
+      width: 180%;
+      height: 180%;
+      left: -40%;
+      top: -40%;
+      background: conic-gradient(from 0deg, transparent 0 20%, rgba(255,209,102,.6), transparent 40% 60%, rgba(255,77,141,.55), transparent 80% 100%);
+      filter: blur(35px);
+      transform: translateZ(-30px);
+      animation: spin 11s linear infinite;
+      opacity: .38;
+      pointer-events: none;
+    }
+    @keyframes spin { to { transform: translateZ(-30px) rotate(1turn); } }
+
+    h1 {
+      margin: .3rem 0 .4rem;
+      font-size: clamp(2rem, 6vw, 4.5rem);
+      line-height: 1;
+      letter-spacing: 1px;
+      text-align: center;
+      text-shadow: 0 0 25px rgba(255,209,102,.55);
+    }
+    .spark {
+      background: linear-gradient(45deg, var(--gold), #fff8d5, var(--pink), var(--cyan));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      background-size: 300% 300%;
+      animation: shimmer 5s ease infinite;
+    }
+    @keyframes shimmer {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .msg {
+      text-align: center;
+      font-size: clamp(1rem, 2.3vw, 1.35rem);
+      opacity: .95;
+      max-width: 44ch;
+      margin: 0 auto 1.2rem;
+    }
+
+    .buttons {
+      display: flex;
+      justify-content: center;
+      gap: .8rem;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: .8rem 1.15rem;
+      font-weight: 700;
+      cursor: pointer;
+      color: #130a35;
+      background: linear-gradient(135deg, var(--gold), #ffe89a);
+      box-shadow: 0 10px 25px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.65);
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+    button.alt {
+      color: var(--white);
+      background: linear-gradient(135deg, #4f3bcf, #7b5cff);
+    }
+    button:hover { transform: translateY(-2px) scale(1.03); }
+    button:active { transform: translateY(1px) scale(.98); }
+
+    .footer {
+      margin-top: 1rem;
+      text-align: center;
+      opacity: .86;
+      font-size: .95rem;
+    }
+
+    #wish {
+      margin-top: .7rem;
+      text-align: center;
+      min-height: 1.4rem;
+      font-weight: 600;
+      color: #fff5c9;
+    }
+
+    .balloons { position: absolute; inset: 0; pointer-events: none; z-index: 10; }
+    .balloon {
+      position: absolute;
+      bottom: -140px;
+      width: 48px;
+      height: 62px;
+      border-radius: 50% 50% 48% 48%;
+      opacity: .9;
+      animation: rise linear infinite;
+      box-shadow: inset -8px -10px 12px rgba(0,0,0,.2);
+    }
+    .balloon::after {
+      content: "";
+      position: absolute;
+      width: 2px;
+      height: 60px;
+      background: rgba(255,255,255,.55);
+      left: 50%;
+      top: 60px;
+      transform: translateX(-50%);
+    }
+    @keyframes rise {
+      from { transform: translateY(0) translateX(0); }
+      to { transform: translateY(-120vh) translateX(30px); }
+    }
+
+    canvas {
+      position: absolute;
+      inset: 0;
+      z-index: 30;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="scene" id="scene">
+    <div class="layer stars" data-depth="0.08"></div>
+    <div class="layer aurora" data-depth="0.16"></div>
+    <div class="balloons" id="balloons"></div>
+    <div class="card-wrap">
+      <section class="card" id="card">
+        <div class="glow-ring"></div>
+        <h1 class="spark">Happy Birthday!</h1>
+        <p class="msg">Wishing you sparkle, surprises, and a year that feels like fireworks in slow motion.</p>
+        <div class="buttons">
+          <button id="blastBtn">🎉 Blast Confetti</button>
+          <button class="alt" id="wishBtn">💫 Surprise Wish</button>
+        </div>
+        <div id="wish"></div>
+        <p class="footer">Move your mouse, click, and enjoy the magic ✨</p>
+      </section>
+    </div>
+    <canvas id="fx"></canvas>
+  </div>
+
+  <script>
+    const scene = document.getElementById("scene");
+    const card = document.getElementById("card");
+    const layers = [...document.querySelectorAll(".layer")];
+    const canvas = document.getElementById("fx");
+    const ctx = canvas.getContext("2d");
+    const blastBtn = document.getElementById("blastBtn");
+    const wishBtn = document.getElementById("wishBtn");
+    const wishBox = document.getElementById("wish");
+    const balloons = document.getElementById("balloons");
+
+    const wishes = [
+      "May your day be brighter than a thousand stars ✨",
+      "May laughter follow you into every new adventure 🎈",
+      "You deserve magic, cake, and every good thing today 🎂",
+      "May this year be your boldest and happiest chapter yet 🚀",
+      "Hope your dreams level up in every direction 🌌"
+    ];
+
+    let w = canvas.width = innerWidth;
+    let h = canvas.height = innerHeight;
+    let particles = [];
+
+    function resize() {
+      w = canvas.width = innerWidth;
+      h = canvas.height = innerHeight;
+    }
+    addEventListener("resize", resize);
+
+    function spawnBalloons() {
+      const colors = ["#ff4d8d", "#ffd166", "#77f5ff", "#9f7bff", "#ff7b54"];
+      for (let i = 0; i < 14; i++) {
+        const b = document.createElement("div");
+        b.className = "balloon";
+        b.style.left = `${Math.random() * 100}%`;
+        b.style.animationDuration = `${8 + Math.random() * 8}s`;
+        b.style.animationDelay = `${-Math.random() * 12}s`;
+        b.style.background = colors[i % colors.length];
+        balloons.appendChild(b);
+      }
+    }
+
+    function confettiBurst(x = w / 2, y = h / 2, count = 120) {
+      const colors = ["#ffd166", "#ff4d8d", "#77f5ff", "#ffffff", "#9f7bff"];
+      for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 2 + Math.random() * 6;
+        particles.push({
+          x, y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - 2,
+          g: 0.09 + Math.random() * 0.06,
+          life: 50 + Math.random() * 40,
+          size: 2 + Math.random() * 4,
+          color: colors[(Math.random() * colors.length) | 0]
+        });
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, w, h);
+      particles = particles.filter(p => p.life > 0);
+      for (const p of particles) {
+        p.vy += p.g;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life--;
+        ctx.globalAlpha = Math.max(p.life / 90, 0);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, p.size, p.size * 1.8);
+      }
+      ctx.globalAlpha = 1;
+      requestAnimationFrame(draw);
+    }
+
+    scene.addEventListener("pointermove", (e) => {
+      const rx = (e.clientX / innerWidth - 0.5);
+      const ry = (e.clientY / innerHeight - 0.5);
+      for (const layer of layers) {
+        const d = Number(layer.dataset.depth);
+        layer.style.transform = `translate(${rx * 120 * d}px, ${ry * 120 * d}px)`;
+      }
+      card.style.transform = `rotateY(${rx * 14}deg) rotateX(${-ry * 14}deg)`;
+    });
+
+    scene.addEventListener("pointerleave", () => {
+      card.style.transform = "";
+      for (const layer of layers) layer.style.transform = "";
+    });
+
+    scene.addEventListener("click", (e) => confettiBurst(e.clientX, e.clientY, 70));
+    blastBtn.addEventListener("click", () => confettiBurst(w / 2, h * 0.45, 180));
+    wishBtn.addEventListener("click", () => {
+      wishBox.textContent = wishes[(Math.random() * wishes.length) | 0];
+      confettiBurst(w / 2, h * 0.35, 120);
+    });
+
+    spawnBalloons();
+    draw();
+    confettiBurst(w / 2, h * 0.45, 220);
+  </script>
+</body>
+</html>
