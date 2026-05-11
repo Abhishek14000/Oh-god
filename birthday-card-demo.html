@@ -257,13 +257,13 @@
       "Hope your dreams level up in every direction 🌌"
     ];
 
-    let w = canvas.width = innerWidth;
-    let h = canvas.height = innerHeight;
+    let w = canvas.width = window.innerWidth;
+    let h = canvas.height = window.innerHeight;
     let particles = [];
 
     function resize() {
-      w = canvas.width = innerWidth;
-      h = canvas.height = innerHeight;
+      w = canvas.width = window.innerWidth;
+      h = canvas.height = window.innerHeight;
     }
     window.addEventListener("resize", resize);
 
@@ -314,8 +314,8 @@
     }
 
     scene.addEventListener("pointermove", (e) => {
-      const rx = (e.clientX / innerWidth - 0.5);
-      const ry = (e.clientY / innerHeight - 0.5);
+      const rx = (e.clientX / window.innerWidth - 0.5);
+      const ry = (e.clientY / window.innerHeight - 0.5);
       for (const layer of layers) {
         const d = Number(layer.dataset.depth);
         layer.style.transform = `translate(${rx * 120 * d}px, ${ry * 120 * d}px)`;
